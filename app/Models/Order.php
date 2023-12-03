@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Models\Printer as ModelsPrinter;
 use App\Classes\ShopInfo;
+use App\Classes\RefundPolicy;
 use Illuminate\Database\Eloquent\Model;
+use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\Printer;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 
@@ -29,7 +31,7 @@ class Order extends Model
     public function __construct($order)
     {
         $this->id                       = $order['id'] ?? '';
-        $this->barcode                  = $order['barcode'] ?? '';
+        $this->barcode                  = $order['barcode'] ?? '5346';
         $this->totalPrice               = $order['total_price'] ?? '';
         $this->totalPriceBeforeDiscount = $order['total_price_before_discount'] ?? '';
         $this->discount                 = $order['discount'] ?? '';
@@ -41,7 +43,7 @@ class Order extends Model
         $this->orderTime                = $order['order_time'] ?? '';
         $this->totalCount               = $order['total_count'] ?? '';
         $this->totalModelCount          = $order['total_model_count'] ?? '';
-        $this->products                 = $order['products'] ?? '';
+        $this->products                 = $order['products'] ?? [ ];
     }
 
     public function print()
@@ -55,7 +57,7 @@ class Order extends Model
         try {
             $connector = new WindowsPrintConnector($printer);
             $printer   = new Printer($connector);
-            $logo      = EscposImage::load("../../public/logo-icon-black.png", false);
+            $logo      = EscposImage::load('logo-icon-black.png', false);
 
             /* Print top logo */
             $printer->setJustification(Printer::JUSTIFY_CENTER);
@@ -65,9 +67,12 @@ class Order extends Model
             $printer->selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
             $printer->text("{$shop}\n");
             $printer->selectPrintMode();
+            $printer->setJustification(Printer::JUSTIFY_LEFT);
+            $printer->text("Tel: {$tel}\n");
             $printer->feed();
 
             /* Title of receipt */
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->setEmphasis(true);
             $printer->text("SALES INVOICE - فاتورة بيع\n");
             $printer->setEmphasis(false);
@@ -102,7 +107,7 @@ class Order extends Model
             }
 
             $printer->setEmphasis(true);
-            $this->text("الإجمالي | Total     {$this->totalPriceBeforeDiscount}");
+            $printer->text("الإجمالي | Total     {$this->totalPriceBeforeDiscount}");
             $printer->setEmphasis(false);
             $printer->feed();
 
@@ -112,20 +117,40 @@ class Order extends Model
             $lblRemaining = str_pad('المتبقي | Remaining', 31, ' ', STR_PAD_LEFT);
             $lblModel     = str_pad('الأصناف المباعة | Model(s) Count', 31, ' ', STR_PAD_LEFT);
 
-            $this->text("$lblDiscount {$this->discount}");
+            $printer->text("$lblDiscount {$this->discount}");
             $printer->selectPrintMode(Printer::MODE_DOUBLE_WIDTH);
-            $this->text("$lblNet {$this->totalPrice}");
+            $printer->text("$lblNet {$this->totalPrice}");
             $printer->selectPrintMode();
 
-            $this->text("$lblPaid {$this->paidPrice}");
-            $this->text("$lblRemaining {$this->remainPrice}");
-            $this->text("$lblModel {$this->totalModelCount}");
+            $printer->text("$lblPaid {$this->paidPrice}");
+            $printer->text("$lblRemaining {$this->remainPrice}");
+            $printer->text("$lblModel {$this->totalModelCount}");
 
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->barcode($this->barcode, Printer::BARCODE_CODE39);
             $printer->feed();
 
+            /* Refund Policy */
+            [ 'ar' => $termsAr, 'en' => $termsEn ] = RefundPolicy::getTerms();
+            $printer->setTextSize(1, 1);
+
+            // AR
+            $printer->setJustification(Printer::JUSTIFY_RIGHT);
+            foreach($termsAr['terms'] as $term)
+            {
+                $printer->text("- $term\n");
+            }
+
+            // EN
+            $printer->setJustification(Printer::JUSTIFY_LEFT);
+            foreach($termsEn['terms'] as $term)
+            {
+                $printer->text("- $term\n");
+            }
+
+            /* Contact Info */
             $printer->feed(2);
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer->text("Thank you for shopping at One Way\n");
             $printer->text("For trading hours, please visit https://oneway.fashio\n");
             $printer->selectPrintMode(

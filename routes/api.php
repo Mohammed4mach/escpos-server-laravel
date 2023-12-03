@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PrinterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,4 +21,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('/orders', [OrderController::class, 'index'])->name('orders');
+
+Route::name('printers')
+->prefix('/printers')
+->middleware('Auth')
+->group(function() {
+    Route::get('/', [PrinterController::class, 'index'])->name('index');
+    Route::get('/{type}', [PrinterController::class, 'show'])->name('show');
+    Route::put('/{type}', [PrinterController::class, 'update'])->name('update');
+});
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
 {
@@ -21,10 +22,16 @@ class OrderController extends Controller
         }
         catch(\Exception $e)
         {
-            return response()->json(['message' => $e->getMessage()]);
+            $message = "Failed to print. Verify that the printer is shared with the provided printer share name via the agent.";
+            $body = [
+                'message' => $message
+            ];
+
+            return response()
+            ->json($body, Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
-        return response('', 201);
+        return response('', Response::HTTP_CREATED);
     }
 
     /**

@@ -31,6 +31,7 @@ class Order extends Model
     public function __construct($order)
     {
         $this->id                       = $order['id'] ?? '';
+        $this->productName              = $order['product_name'] ?? '';
         $this->barcode                  = $order['barcode'] ?? '5346';
         $this->totalPrice               = $order['total_price'] ?? '';
         $this->totalPriceBeforeDiscount = $order['total_price_before_discount'] ?? '';

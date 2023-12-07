@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/orders', [OrderController::class, 'index'])->name('orders');
 Route::post('/products', [ProductController::class, 'index'])->name('products');
+Route::post('/products/multi', [ProductController::class, 'multiIndex'])->name('products-multi');
 
 Route::name('printers')
 ->prefix('/printers')

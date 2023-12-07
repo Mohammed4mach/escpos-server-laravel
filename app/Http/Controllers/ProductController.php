@@ -34,51 +34,27 @@ class ProductController extends Controller
         return response('', Response::HTTP_CREATED);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function multiIndex(Request $request)
     {
-        //
-    }
+        $prodInfo = $request->all();
+        $prod     = new Product($prodInfo);
+	$times    = $prodInfo['times'] ?? 1;
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        try
+        {
+            $prod->multiBarcode($times);
+        }
+        catch(\Exception $e)
+        {
+            $message = "Failed to print. Verify that the printer is shared with the provided printer share name via the agent.";
+            $body = [
+                'message' => $message
+            ];
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
-    {
-        //
-    }
+            return response()
+            ->json($body, Response::HTTP_SERVICE_UNAVAILABLE);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
-    {
-        //
+        return response('', Response::HTTP_CREATED);
     }
 }

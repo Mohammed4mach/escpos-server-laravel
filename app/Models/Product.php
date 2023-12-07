@@ -36,8 +36,8 @@ class Product extends Model
             ^XA
             ^CF0,25
             ^CI28
-            ^FO302,23^FD{$name}^FS
-            ^BY2,3,67^FT305,140^BCN,,Y,N
+            ^FO299,23^FD{$name}^FS
+            ^BY2,3,67^FT277,140^BCN,,Y,N
             ^FH\^FD{$barcode}^FS
             ^XZ
             ";
@@ -46,6 +46,41 @@ class Product extends Model
             $printer->feed();
 
             $printer->cut();
+            $printer->close();
+        }
+        catch (\Exception $e) {
+            throw new \Exception($e);
+        }
+    }
+
+    public function multiBarcode($times)
+    {
+        $printer = ModelsPrinter::getBarcodePrinterName();
+        $name    = $this->name;
+        $barcode = $this->barcode;
+
+        try {
+            $connector = new WindowsPrintConnector($printer);
+            $printer   = new Printer($connector);
+
+            $text = "
+            ^XA
+            ^CF0,25
+            ^CI28
+            ^FO302,23^FD{$name}^FS
+            ^BY2,3,67^FT280,140^BCN,,Y,N
+            ^FH\^FD{$barcode}^FS
+            ^XZ
+            ";
+
+	    for($i = 0; $i < $times; $i++)
+	    {
+            $printer->textRaw($text);
+            $printer->feed();
+            $printer->cut();
+	    }
+
+            $printer->close();
         }
         catch (\Exception $e) {
             throw new \Exception($e);
